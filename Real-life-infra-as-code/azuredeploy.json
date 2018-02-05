@@ -1,0 +1,120 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "webAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "The name of the web app that you wish to create."
+      }
+    },
+    "webAppSkuName": {
+      "type": "string",
+      "defaultValue": "F1",
+      "allowedValues": [
+        "F1",
+        "D1",
+        "B1",
+        "B2",
+        "B3",
+        "S1",
+        "S2",
+        "S3",
+        "P1",
+        "P2",
+        "P3",
+        "P4"
+      ],
+      "metadata": {
+        "description": "Describes plan's pricing tier and instance size. Check details at https://azure.microsoft.com/en-us/pricing/details/app-service/"
+      }
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_GRS",
+        "Standard_ZRS",
+        "Premium_LRS"
+      ],
+      "metadata": {
+        "description": "Storage Account type"
+      }
+    }
+  },
+  "variables": {
+    "serverFarmName": "[concat(parameters('webAppName'), '_ServerFarm')]",
+    "storageAccountName": "[concat(uniquestring(resourceGroup().id), 'standardsa')]",
+    "appinsightName": "[concat(toLower(parameters('webAppName')), '-appinsight')]"
+  },
+  "resources": [
+    {
+      "name": "[variables('serverFarmName')]",
+      "type": "Microsoft.Web/serverfarms",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2015-08-01",
+      "tags": {
+        "displayName": "[variables('serverFarmName')]"
+      },
+      "sku": {
+        "name": "[parameters('webAppSkuName')]",
+        "capacity": "1"
+      },
+      "properties": {
+        "name": "[variables('serverFarmName')]"
+      }
+    },
+    {
+      "name": "[parameters('webAppName')]",
+      "type": "Microsoft.Web/sites",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2016-08-01",
+      "dependsOn": [
+        "[variables('serverFarmName')]"
+      ],
+      "tags": {
+        "displayName": "[parameters('webAppName')]"
+      },
+      "properties": {
+        "name": "[parameters('webAppName')]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('serverFarmName'))]",
+        "clientAffinityEnabled": false,
+        "siteConfig": {
+          "javaVersion": "Off",
+          "phpVersion": "Off",
+          "pythonVersion": "Off",
+          "appSettings": [
+            {
+              "name": "WEBSITE_NODE_DEFAULT_VERSION",
+              "value": "6.11.1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('storageAccountName')]",
+      "apiVersion": "2016-01-01",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "[parameters('storageAccountType')]"
+      },
+      "kind": "Storage",
+      "properties": {
+      }
+    },
+    {
+      "type": "microsoft.insights/components",
+      "kind": "Node.JS",
+      "name": "[variables('appinsightName')]",
+      "apiVersion": "2015-05-01",
+      "location": "[resourceGroup().location]",
+      "tags": {},
+      "properties": {},
+      "dependsOn": []
+    }
+
+  ]
+}

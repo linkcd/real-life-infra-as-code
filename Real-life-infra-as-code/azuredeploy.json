@@ -71,7 +71,9 @@
       "location": "[resourceGroup().location]",
       "apiVersion": "2016-08-01",
       "dependsOn": [
-        "[variables('serverFarmName')]"
+        "[concat('Microsoft.Web/serverfarms/', variables('serverFarmName'))]",
+        "[concat('Microsoft.Storage/storageAccounts/', variables('storageAccountName'))]",
+        "[concat('microsoft.insights/components/', variables('appinsightName'))]"
       ],
       "tags": {
         "displayName": "[parameters('webAppName')]"
@@ -88,6 +90,18 @@
             {
               "name": "WEBSITE_NODE_DEFAULT_VERSION",
               "value": "6.11.1"
+            },
+            {
+              "name": "STORAGE_ACCOUNT",
+              "value": "[variables('storageAccountName')]"
+            },
+            {
+              "name": "STORAGE_ACCESSKEY",
+              "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2016-01-01').keys[0].value]"
+            },
+            {
+              "name": "APPINSIGHTS_INSTRUMENTATIONKEY",
+              "value": "[reference(resourceId('microsoft.insights/components', variables('appinsightName')), '2015-05-01').InstrumentationKey]"
             }
           ]
         }
